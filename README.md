@@ -1,131 +1,86 @@
-# Supabase Connector
+# Supabase Website Connection
 
-A Node.js + Express server that connects directly to PostgreSQL (Supabase) with SSL.
-
----
-
-## Quick Start
-
-```bash
-npm install
-npm start
-```
-
-Server runs at **http://localhost:3000**
+A static HTML/CSS/JS website that connects directly to Supabase PostgreSQL.  
+**No server required** - works on GitHub Pages! 🚀
 
 ---
 
-## Configuration
+## Quick Start (GitHub Pages)
 
-Edit `src/connection/config.js` with your Supabase credentials:
+1. **Configure Supabase credentials** in `src/connection/config.js`:
 
 ```js
-export const DB_CONFIG = {
-    host: 'aws-1-ap-south-1.pooler.supabase.com',
-    port: 5432,
-    database: 'postgres',
-    
-    // Username format for pooler: USERNAME.PROJECT_REF
-    username: 'your_user.your_project_ref',
-    password: 'your_password',
-
-    ssl: {
-        rejectUnauthorized: true,
-        ca: './prod-ca-2021.crt'
-    }
-};
-
-//add user 
-//copy this to ai and ask i i wanna create a user with the password and username (of ur choice) with acess to the table of a schema and it should work
-//run this in the sql editor in the postgres
--- 1️⃣ Grant access to xxxSchemaNamexxx schema (skip CREATE ROLE)
-GRANT USAGE ON SCHEMA xxxSchemaNamexxx TO restricted;
-
--- 2️⃣ Grant privileges on the table
-GRANT SELECT, INSERT, UPDATE ON xxxSchemaNamexxx.xxxTable_Namexxx TO restricted;
-
--- 3️⃣ Grant privileges on the sequence (for auto-increment)
-GRANT USAGE, SELECT, UPDATE ON SEQUENCE xxxSchemaNamexxx.xxxTable_Namexxx_record_index_seq TO restricted;
-
--- 4️⃣ Enable RLS on the table (if not already)
-ALTER TABLE xxxSchemaNamexxx.xxxTable_Namexxx ENABLE ROW LEVEL SECURITY;
-
--- 5️⃣ Add RLS policies for restricted user
-CREATE POLICY "xUSERNAMEx_select" ON xxxSchemaNamexxx.xxxTable_Namexxx
-FOR SELECT
-TO restricted
-USING (true);
-
-CREATE POLICY "xUSERNAMEx_insert" ON xxxSchemaNamexxx.xxxTable_Namexxx
-FOR INSERT
-TO restricted
-WITH CHECK (true);
-
-CREATE POLICY "xUSERNAMEx_update" ON xxxSchemaNamexxx.xxxTable_Namexxx
-FOR UPDATE
-TO restricted
-USING (true)
-WITH CHECK (true);
-
-//
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const DEFAULT_TABLE_NAME = 'your_table_name';
 ```
 
-### How to get your credentials:
-
-1. Go to **Supabase Dashboard → Settings → Database**
-2. Select **Session pooler** (recommended for servers)
-3. Copy:
-   - **Host**: e.g. `aws-1-ap-south-1.pooler.supabase.com`
-   - **Username**: `postgres.YOUR_PROJECT_REF` (or custom user)
-   - **Password**: Your database password
-
-### Username format for pooler:
-- Default user: `postgres.YOUR_PROJECT_REF`
-- Custom user: `YOUR_USERNAME.YOUR_PROJECT_REF`
+2. **Push to GitHub** and enable GitHub Pages:
+   - Go to repo **Settings → Pages**
+   - Set source to `main` branch, folder `/src`
+   - Your site will be live at `https://username.github.io/repo-name/`
 
 ---
 
-## SSL Certificate
+## Local Development
 
-The SSL certificate (`prod-ca-2021.crt`) is in `src/connection/`. Download the latest from Supabase if needed.
+Just open `src/index.html` in your browser, or use a local server:
+
+```bash
+# Using Python
+cd src && python -m http.server 8000
+
+# Using Node.js (npx)
+npx serve src
+```
 
 ---
 
 ## Project Structure
 
 ```
-├── src/
-│   ├── connection/
-│   │   ├── server.js         # Express server with API routes
-│   │   ├── config.js         # Database credentials (DO NOT COMMIT)
-│   │   └── prod-ca-2021.crt  # SSL certificate
-│   └── index.html            # Frontend form
-└── package.json
+src/
+├── index.html          # Main page
+├── script.js           # App logic (uses Database class)
+├── styles.css          # Styling
+└── connection/
+    ├── config.js       # Supabase URL + anon key
+    └── database.js     # Database class (REST API wrapper)
 ```
 
 ---
 
-## API Endpoints
+## How It Works
 
-| Method | Endpoint       | Description          |
-|--------|----------------|----------------------|
-| GET    | `/api/records` | Fetch all records    |
-| POST   | `/api/records` | Insert a new record  |
+This uses **Supabase's REST API** directly from the browser:
+- No Express server needed
+- No npm dependencies
+- Works on any static hosting (GitHub Pages, Netlify, Vercel, etc.)
 
----
-
-## For New Projects
-
-1. Clone this repo
-2. Update `src/connection/config.js` with your new Supabase project credentials
-3. Modify `src/connection/server.js` to match your table schema
-4. Update `src/index.html` form fields as needed
-5. Run `npm start`
+The `database.js` class provides:
+- `selectAll()` - Get all records
+- `select(filters)` - Get filtered records
+- `insert(data)` - Insert a new record
+- `update(data, filters)` - Update records
+- `delete(filters)` - Delete records
 
 ---
 
 ## Security Notes
 
-- **Never commit `src/connection/config.js`** - it's in `.gitignore`
-- Use the **Session pooler** for persistent connections
-- Use a **restricted database user** in production, not the postgres admin
+⚠️ **Don't commit your anon key to public repos!**
+
+For production:
+1. Enable **Row Level Security (RLS)** on your Supabase tables
+2. The anon key is safe to expose IF RLS is properly configured
+3. Consider using `.gitignore` for `config.js` and providing a `config.example.js`
+
+---
+
+## Supabase Setup
+
+1. Create a table in Supabase SQL Editor
+2. Enable RLS and create policies for your use case
+3. Get your credentials from **Settings → API**:
+   - Project URL → `SUPABASE_URL`
+   - anon/public key → `SUPABASE_ANON_KEY`
